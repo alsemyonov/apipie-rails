@@ -71,6 +71,17 @@ module Apipie
       end
     end
 
+    def swagger
+      @language = get_language
+
+      Apipie.load_documentation if Apipie.configuration.reload_controllers? || (Rails.version.to_i >= 4.0 && !Rails.application.config.eager_load)
+
+      I18n.locale = @language
+      @doc = Apipie.to_json(params[:version], params[:resource], params[:method], @language)
+
+      render :swagger
+    end
+
     def apipie_checksum
     end
 
@@ -127,8 +138,10 @@ module Apipie
       cache_file = File.join(Apipie.configuration.cache_dir, path)
       if File.exists?(cache_file)
         content_type = case params[:format]
-                       when "json" then "application/json"
-                       else "text/html"
+                         when "json" then
+                           "application/json"
+                         else
+                           "text/html"
                        end
         send_file cache_file, :type => content_type, :disposition => "inline"
       else
